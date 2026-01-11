@@ -1,4 +1,9 @@
-import { ConnectorConfig, DataConnect, OperationOptions, ExecuteOperationResponse } from 'firebase-admin/data-connect';
+import {
+  ConnectorConfig,
+  DataConnect,
+  OperationOptions,
+  ExecuteOperationResponse,
+} from 'firebase-admin/data-connect';
 
 export const connectorConfig: ConnectorConfig;
 
@@ -6,7 +11,6 @@ export type TimestampString = string;
 export type UUIDString = string;
 export type Int64String = string;
 export type DateString = string;
-
 
 export interface Assignment_Key {
   id: UUIDString;
@@ -62,7 +66,7 @@ export interface Group_Key {
 
 export interface ListCoursesForUserData {
   user?: {
-    enrollments_on_user: ({
+    enrollments_on_user: {
       course: {
         id: UUIDString;
         courseCode: string;
@@ -72,7 +76,7 @@ export interface ListCoursesForUserData {
         semester: string;
         year: number;
       } & Course_Key;
-    })[];
+    }[];
   };
 }
 
@@ -97,22 +101,47 @@ export interface User_Key {
 }
 
 /** Generated Node Admin SDK operation action function for the 'CreateNewEvent' Mutation. Allow users to execute without passing in DataConnect. */
-export function createNewEvent(dc: DataConnect, vars: CreateNewEventVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CreateNewEventData>>;
+export function createNewEvent(
+  dc: DataConnect,
+  vars: CreateNewEventVariables,
+  options?: OperationOptions
+): Promise<ExecuteOperationResponse<CreateNewEventData>>;
 /** Generated Node Admin SDK operation action function for the 'CreateNewEvent' Mutation. Allow users to pass in custom DataConnect instances. */
-export function createNewEvent(vars: CreateNewEventVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<CreateNewEventData>>;
+export function createNewEvent(
+  vars: CreateNewEventVariables,
+  options?: OperationOptions
+): Promise<ExecuteOperationResponse<CreateNewEventData>>;
 
 /** Generated Node Admin SDK operation action function for the 'ListPublicEvents' Query. Allow users to execute without passing in DataConnect. */
-export function listPublicEvents(dc: DataConnect, options?: OperationOptions): Promise<ExecuteOperationResponse<ListPublicEventsData>>;
+export function listPublicEvents(
+  dc: DataConnect,
+  options?: OperationOptions
+): Promise<ExecuteOperationResponse<ListPublicEventsData>>;
 /** Generated Node Admin SDK operation action function for the 'ListPublicEvents' Query. Allow users to pass in custom DataConnect instances. */
-export function listPublicEvents(options?: OperationOptions): Promise<ExecuteOperationResponse<ListPublicEventsData>>;
+export function listPublicEvents(
+  options?: OperationOptions
+): Promise<ExecuteOperationResponse<ListPublicEventsData>>;
 
 /** Generated Node Admin SDK operation action function for the 'EnrollUserInCourse' Mutation. Allow users to execute without passing in DataConnect. */
-export function enrollUserInCourse(dc: DataConnect, vars: EnrollUserInCourseVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<EnrollUserInCourseData>>;
+export function enrollUserInCourse(
+  dc: DataConnect,
+  vars: EnrollUserInCourseVariables,
+  options?: OperationOptions
+): Promise<ExecuteOperationResponse<EnrollUserInCourseData>>;
 /** Generated Node Admin SDK operation action function for the 'EnrollUserInCourse' Mutation. Allow users to pass in custom DataConnect instances. */
-export function enrollUserInCourse(vars: EnrollUserInCourseVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<EnrollUserInCourseData>>;
+export function enrollUserInCourse(
+  vars: EnrollUserInCourseVariables,
+  options?: OperationOptions
+): Promise<ExecuteOperationResponse<EnrollUserInCourseData>>;
 
 /** Generated Node Admin SDK operation action function for the 'ListCoursesForUser' Query. Allow users to execute without passing in DataConnect. */
-export function listCoursesForUser(dc: DataConnect, vars: ListCoursesForUserVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<ListCoursesForUserData>>;
+export function listCoursesForUser(
+  dc: DataConnect,
+  vars: ListCoursesForUserVariables,
+  options?: OperationOptions
+): Promise<ExecuteOperationResponse<ListCoursesForUserData>>;
 /** Generated Node Admin SDK operation action function for the 'ListCoursesForUser' Query. Allow users to pass in custom DataConnect instances. */
-export function listCoursesForUser(vars: ListCoursesForUserVariables, options?: OperationOptions): Promise<ExecuteOperationResponse<ListCoursesForUserData>>;
-
+export function listCoursesForUser(
+  vars: ListCoursesForUserVariables,
+  options?: OperationOptions
+): Promise<ExecuteOperationResponse<ListCoursesForUserData>>;
