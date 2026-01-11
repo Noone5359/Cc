@@ -1,0 +1,145 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        id: audit
+        run: |
+          npm audit --json > audit-results.json 2>&1 || true
+          
+          # Count vulnerabilities by severity
+          CRITICAL=$(jq '[.vulnerabilities | to_entries[] | select(.value.severity == "critical")] | length' audit-results.json 2>/dev/null || echo 0)
+          HIGH=$(jq '[.vulnerabilities | to_entries[] | select(.value.severity == "high")] | length' audit-results.json 2>/dev/null || echo 0)
+          MODERATE=$(jq '[.vulnerabilities | to_entries[] | select(.value.severity == "moderate")] | length' audit-results.json 2>/dev/null || echo 0)
+          
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "moderate=$MODERATE" >> $GITHUB_OUTPUT
+
+      - name: Generate report
+        run: |
+          echo "# 🔒 Weekly Security Audit Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Vulnerability Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔴 Critical | ${{ steps.audit.outputs.critical }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟠 High | ${{ steps.audit.outputs.high }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🟡 Moderate | ${{ steps.audit.outputs.moderate }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.audit.outputs.critical }}" != "0" ] || [ "${{ steps.audit.outputs.high }}" != "0" ]; then
+            echo "## ⚠️ Action Required" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Critical or high severity vulnerabilities found. Please review and update affected packages." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Create issue for vulnerabilities
+        if: steps.audit.outputs.critical != '0' || steps.audit.outputs.high != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const critical = ${{ steps.audit.outputs.critical }};
+            const high = ${{ steps.audit.outputs.high }};
+            
+            const title = `🔒 Security: ${critical} critical, ${high} high vulnerabilities found`;
+            const body = `## Weekly Security Audit Results
+            
+            The automated security scan found vulnerabilities that require attention:
+            
+            | Severity | Count |
+            |----------|-------|
+            | 🔴 Critical | ${critical} |
+            | 🟠 High | ${high} |
+            
+            ### Action Required
+            
+            1. Run \`npm audit\` locally to see detailed vulnerability information
+            2. Run \`npm audit fix\` to automatically fix compatible updates
+            3. For breaking changes, manually update packages after testing
+            
+            **Scan Date:** ${new Date().toISOString()}
+            `;
+            
+            // Check for existing open issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security'
+            });
+            
+            const existingIssue = issues.find(i => i.title.includes('Security:'));
+            
+            if (existingIssue) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'automated']
+              });
+            }
+
+  firebase-rules-check:
+    name: Firebase Rules Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Firestore rules syntax
+        run: |
+          # Basic syntax check - ensure rules file is valid
+          if grep -q "rules_version" firestore.rules && grep -q "service cloud.firestore" firestore.rules; then
+            echo "✅ Firestore rules syntax looks valid"
+          else
+            echo "❌ Firestore rules may have syntax issues"
+            exit 1
+          fi
+
+      - name: Validate Storage rules syntax
+        run: |
+          if grep -q "rules_version" storage.rules && grep -q "service firebase.storage" storage.rules; then
+            echo "✅ Storage rules syntax looks valid"
+          else
+            echo "❌ Storage rules may have syntax issues"
+            exit 1
+          fi

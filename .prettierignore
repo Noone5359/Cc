@@ -1,0 +1,7 @@
+node_modules
+dist
+.firebase
+*.min.js
+*.min.css
+public/
+functions/

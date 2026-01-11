@@ -1,0 +1,93 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ============================================
+    // SECURITY HELPER FUNCTIONS
+    // ============================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the filename is safe (no path traversal)
+    function isSafeFilename() {
+      return !request.resource.name.matches('.*\\.\\.\\/.*')
+             && !request.resource.name.matches('.*\\/\\.\\..*');
+    }
+
+    // Allowed image MIME types
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/(jpeg|jpg|png|gif|webp|svg\\+xml)');
+    }
+
+    // ============================================
+    // HERO IMAGES (Login Page)
+    // ============================================
+
+    // Hero images - readable by all, writable by admins only
+    // Note: Admin check happens at application level since we can't read Firestore from Storage rules
+    match /hero-images/{allPaths=**} {
+      // Public read for login page (unauthenticated access needed)
+      allow read: if true;
+      
+      // Write requires authentication, valid file, and size limit
+      // Admin role validation is enforced at the application layer
+      allow write: if isAuthenticated()
+                   && isSafeFilename()
+                   && request.resource.size < 15 * 1024 * 1024  // Max 15MB
+                   && isValidImageType();
+      
+      // Delete requires authentication
+      allow delete: if isAuthenticated();
+    }
+
+    // ============================================
+    // PROFILE PICTURES
+    // ============================================
+
+    match /profile_pictures/{userId}/{allPaths=**} {
+      // Only authenticated users can read profile pictures
+      allow read: if isAuthenticated();
+      
+      // Users can only write to their own profile picture folder
+      allow write: if isAuthenticated() 
+                   && request.auth.uid == userId
+                   && isSafeFilename()
+                   && request.resource.size < 5 * 1024 * 1024  // Max 5MB
+                   && isValidImageType();
+      
+      // Users can only delete their own profile pictures
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ============================================
+    // GRADE SHEETS
+    // ============================================
+
+    match /gradeSheets/{userId}/{allPaths=**} {
+      // Users can only read their own grade sheets
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      
+      // Users can only write to their own grade sheets folder
+      allow write: if isAuthenticated() 
+                   && request.auth.uid == userId
+                   && isSafeFilename()
+                   && request.resource.size < 10 * 1024 * 1024  // Max 10MB
+                   && (isValidImageType() || request.resource.contentType == 'application/pdf');
+      
+      // Users can only delete their own grade sheets
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ============================================
+    // DEFAULT DENY
+    // ============================================
+
+    // Deny all other access by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

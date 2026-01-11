@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(firebase --version)",
+      "Bash(firebase init:*)",
+      "Bash(printf:*)",
+      "Bash(npm run build:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(firebase projects:list:*)",
+      "Bash(firebase:*)",
+      "WebSearch",
+      "WebFetch(domain:www.google.com)",
+      "Bash(npm init:*)",
+      "Bash(cd:*)",
+      "Read(//Users/preethamnimmagadda/Desktop/**)",
+      "Bash(cat:*)",
+      "Bash(npm install)",
+      "Bash(gcloud scheduler jobs list:*)",
+      "Bash(gcloud scheduler jobs describe:*)",
+      "Bash(gcloud scheduler jobs delete:*)",
+      "mcp__ide__getDiagnostics",
+      "mcp__filesystem__read_text_file",
+      "Read(//Users/preethamnimmagadda/Documents/**)",
+      "Bash(npm install:*)"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "outputStyle": "Explanatory"
+}

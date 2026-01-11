@@ -1,0 +1,72 @@
+name: Deploy to College
+
+on:
+  workflow_dispatch:
+    inputs:
+      college:
+        description: 'College to deploy'
+        required: true
+        type: choice
+        options:
+          - iitism
+          # Add new colleges here
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.college }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4 
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Load college config
+        run: |
+          COLLEGE="${{ inputs.college }}"
+          COLLEGE_UPPER=$(echo "$COLLEGE" | tr '[:lower:]' '[:upper:]')
+          
+          # Create .env from template, replacing secret placeholders
+          cp colleges/$COLLEGE/.env.production.template .env 2>/dev/null || \
+          cp colleges/$COLLEGE/.env.production .env
+          
+          # Inject per-tenant Firebase secrets
+          sed -i "s|\${${COLLEGE_UPPER}_FIREBASE_API_KEY}|${{ secrets[format('{0}_FIREBASE_API_KEY', inputs.college)] }}|g" .env
+          sed -i "s|\${${COLLEGE_UPPER}_PROJECT_ID}|${{ secrets[format('{0}_PROJECT_ID', inputs.college)] }}|g" .env
+          sed -i "s|\${${COLLEGE_UPPER}_MESSAGING_SENDER_ID}|${{ secrets[format('{0}_MESSAGING_SENDER_ID', inputs.college)] }}|g" .env
+          sed -i "s|\${${COLLEGE_UPPER}_APP_ID}|${{ secrets[format('{0}_APP_ID', inputs.college)] }}|g" .env
+          sed -i "s|\${${COLLEGE_UPPER}_MEASUREMENT_ID}|${{ secrets[format('{0}_MEASUREMENT_ID', inputs.college)] }}|g" .env
+          sed -i "s|\${${COLLEGE_UPPER}_GEMINI_API_KEY}|${{ secrets[format('{0}_GEMINI_API_KEY', inputs.college)] }}|g" .env
+          
+          # Inject SHARED EmailJS secrets (common across all tenants)
+          echo "" >> .env
+          echo "# Shared Services" >> .env
+          echo "VITE_EMAILJS_SERVICE_ID=${{ secrets.VITE_EMAILJS_SERVICE_ID }}" >> .env
+          echo "VITE_EMAILJS_TEMPLATE_ID=${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}" >> .env
+          echo "VITE_EMAILJS_PUBLIC_KEY=${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}" >> .env
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets[format('{0}_FIREBASE_SERVICE_ACCOUNT', inputs.college)] }}
+          projectId: ${{ secrets[format('{0}_PROJECT_ID', inputs.college)] }}
+          channelId: live
+
+      - name: Summary
+        run: |
+          echo "## ✅ Deployed to ${{ inputs.college }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| College | ${{ inputs.college }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Time | $(date -u) |" >> $GITHUB_STEP_SUMMARY
