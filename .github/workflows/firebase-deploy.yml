@@ -34,8 +34,8 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
           # Domain Config
-          VITE_ALLOWED_EMAIL_DOMAIN: "@gmail.com"
-          VITE_HOSTED_DOMAIN: "gmail.com"
+          VITE_ALLOWED_EMAIL_DOMAIN: "@iitism.ac.in"
+          VITE_HOSTED_DOMAIN: "iitism.ac.in"
           # External Services
           VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           # Shared Services
