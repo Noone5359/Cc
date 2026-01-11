@@ -5,3 +5,4 @@ dist
 *.min.css
 public/
 functions/
+src/dataconnect-admin-generated/
