@@ -24,30 +24,30 @@ jobs:
 
       - name: Build project
         env:
-          # IIT(ISM) Firebase Config (hardcoded non-secrets)
-          VITE_FIREBASE_AUTH_DOMAIN: college-central-52897.firebaseapp.com
-          VITE_FIREBASE_PROJECT_ID: college-central-52897
-          VITE_FIREBASE_STORAGE_BUCKET: college-central-52897.firebasestorage.app
-          # IIT(ISM) Firebase Secrets
-          VITE_FIREBASE_API_KEY: ${{ secrets.iitism_FIREBASE_API_KEY }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.iitism_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID: ${{ secrets.iitism_APP_ID }}
-          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.iitism_MEASUREMENT_ID }}
-          # IIT(ISM) Domain Config
-          VITE_ALLOWED_EMAIL_DOMAIN: "@iitism.ac.in"
-          VITE_HOSTED_DOMAIN: "iitism.ac.in"
-          # IIT(ISM) External Services
-          VITE_GEMINI_API_KEY: ${{ secrets.iitism_GEMINI_API_KEY }}
-          # Shared Services (common across all tenants)
-          VITE_EMAILJS_SERVICE_ID: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
-          VITE_EMAILJS_TEMPLATE_ID: ${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}
-          VITE_EMAILJS_PUBLIC_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
+          # Firebase Config
+          VITE_FIREBASE_AUTH_DOMAIN: collegecentralfake.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: collegecentralfake
+          VITE_FIREBASE_STORAGE_BUCKET: collegecentralfake.firebasestorage.app
+          # Firebase Secrets
+          VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
+          # Domain Config
+          VITE_ALLOWED_EMAIL_DOMAIN: "@gmail.com"
+          VITE_HOSTED_DOMAIN: "gmail.com"
+          # External Services
+          VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Shared Services
+          VITE_EMAILJS_SERVICE_ID: ${{ secrets.EMAILJS_SERVICE_ID }}
+          VITE_EMAILJS_TEMPLATE_ID: ${{ secrets.EMAILJS_TEMPLATE_ID }}
+          VITE_EMAILJS_PUBLIC_KEY: ${{ secrets.EMAILJS_PUBLIC_KEY }}
         run: npm run build
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.iitism_FIREBASE_SERVICE_ACCOUNT }}
-          projectId: college-central-52897
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: collegecentralfake
           channelId: live
