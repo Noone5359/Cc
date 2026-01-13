@@ -29,7 +29,7 @@ try {
 }
 
 // Check if already initialized to avoid "default app already exists" error
-if (!admin.apps.length) {
+if (!admin.apps || admin.apps.length === 0) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
@@ -53,30 +53,30 @@ const addAdminEmail = async (email: string) => {
 
   try {
     const configRef = db.collection('appConfig').doc('adminEmails');
-    
+
     // Use transaction to ensure atomic update
     await db.runTransaction(async (transaction) => {
       const doc = await transaction.get(configRef);
-      
+
       let currentEmails: string[] = [];
-      
+
       if (doc.exists) {
         const data = doc.data();
         if (data && Array.isArray(data.items)) {
           currentEmails = data.items;
         }
       }
-      
+
       if (currentEmails.includes(normalizedEmail)) {
         console.log(`⚠️  ${normalizedEmail} is already an admin.`);
         return;
       }
-      
+
       const updatedEmails = [...currentEmails, normalizedEmail];
-      
+
       // We store arrays in { items: [...] } format for appConfig
       transaction.set(configRef, { items: updatedEmails }, { merge: true });
-      
+
       console.log(`✅ Successfully added ${normalizedEmail} as an admin.`);
       console.log(`   Current admins: ${updatedEmails.join(', ')}`);
     });
@@ -85,7 +85,7 @@ const addAdminEmail = async (email: string) => {
     // rather than waiting for them to login again (though useRole hook handles this too)
     const usersRef = db.collection('users');
     const userSnapshot = await usersRef.where('email', '==', normalizedEmail).get();
-    
+
     if (!userSnapshot.empty) {
       const batch = db.batch();
       userSnapshot.forEach(doc => {

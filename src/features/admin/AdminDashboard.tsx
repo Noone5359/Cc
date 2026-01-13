@@ -361,7 +361,7 @@ const AdminDashboard: React.FC = () => {
                 <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-3 group-hover:opacity-80 transition-opacity">
                   <span className="admin-header-title">College Central</span>
                   <span className="text-xs px-2 py-1 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-300 font-medium animate-pulse">
-                    {adminConfig.config.collegeInfo?.name?.short || 'Admin'}
+                    {adminConfig.config.collegeInfo?.name?.short || adminConfig.config.collegeInfo?.name?.full || 'Admin'}
                   </span>
                 </h1>
                 <p className="admin-header-subtitle text-sm mt-0.5">Administrator Panel</p>
