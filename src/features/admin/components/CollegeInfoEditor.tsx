@@ -18,20 +18,6 @@ interface Props {
 }
 
 const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateAppConstants }) => {
-  // Guard against missing or incomplete config data
-  if (!config.collegeInfo?.name || !config.appConstants) {
-    return (
-      <AdminPageLayout>
-        <div className="admin-card flex items-center justify-center p-12">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-slate-400">Loading configuration...</p>
-          </div>
-        </div>
-      </AdminPageLayout>
-    );
-  }
-
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -49,6 +35,21 @@ const CollegeInfoEditor: React.FC<Props> = ({ config, updateCollegeInfo, updateA
       setLocalAppConstants(config.appConstants);
     }
   }, [config.collegeInfo, config.appConstants, isEditing]);
+
+  // Guard against missing or incomplete config data
+  // Must be after all hooks to verify Rules of Hooks
+  if (!config.collegeInfo?.name || !config.appConstants) {
+    return (
+      <AdminPageLayout>
+        <div className="admin-card flex items-center justify-center p-12">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-400">Loading configuration...</p>
+          </div>
+        </div>
+      </AdminPageLayout>
+    );
+  }
 
   const handleSave = async () => {
     setIsSaving(true);
