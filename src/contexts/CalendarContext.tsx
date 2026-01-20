@@ -204,13 +204,13 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
     // Use calendar data from database config if available, otherwise fallback to preloaded
     const baseCalendarData = hasAdminConfiguredData
       ? {
-          semesterStartDate: config.calendar.semesterStartDate,
-          semesterEndDate: config.calendar.semesterEndDate,
-          events: config.calendar.events.map((e) => ({
-            ...e,
-            type: e.type as CalendarEvent['type'],
-          })),
-        }
+        semesterStartDate: config.calendar.semesterStartDate,
+        semesterEndDate: config.calendar.semesterEndDate,
+        events: config.calendar.events.map((e) => ({
+          ...e,
+          type: e.type as CalendarEvent['type'],
+        })),
+      }
       : PRELOADED_CALENDAR_DATA;
 
     // Only adjust dates for preloaded/fallback data, NOT for admin-configured data
@@ -368,6 +368,121 @@ export const CalendarProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     return () => clearInterval(intervalId);
   }, [currentUser, calendarData]); // Removed cleanupPastEventReminders from deps to avoid infinite loop
+
+  // Show web notifications for reminders that are due today
+  useEffect(() => {
+    if (!currentUser || !calendarData) return;
+
+    const checkAndShowNotifications = async () => {
+      console.log('[Notifications] Checking for due reminders...');
+
+      // Check if the browser supports notifications
+      if (!('Notification' in window)) {
+        console.log('[Notifications] Browser does not support notifications');
+        return;
+      }
+
+      console.log('[Notifications] Current permission:', Notification.permission);
+
+      // Request permission if not already granted
+      if (Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        console.log('[Notifications] Permission result:', permission);
+        if (permission !== 'granted') {
+          return;
+        }
+      }
+
+      if (Notification.permission !== 'granted') {
+        console.log('[Notifications] Permission not granted');
+        return;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayString = today.toISOString().slice(0, 10);
+      console.log('[Notifications] Today:', todayString);
+
+      // Get the key for tracking notifications shown today
+      const notificationKey = `reminderNotificationsShown_${todayString}`;
+      const shownNotificationsRaw = localStorage.getItem(notificationKey);
+      const shownNotifications: string[] = shownNotificationsRaw
+        ? JSON.parse(shownNotificationsRaw)
+        : [];
+      console.log('[Notifications] Already shown today:', shownNotifications);
+
+      // Find reminders that are due today (or ongoing)
+      const dueReminders = calendarData.events.filter((event) => {
+        const eventKey = getEventKey(event);
+
+        // Check if this event has a reminder set
+        const isUserCreatedWithReminder = event.remindMe === true && !!event.userId;
+        const isPreloadedWithReminder = !event.userId && reminderPreferences.includes(eventKey);
+
+        if (!isUserCreatedWithReminder && !isPreloadedWithReminder) return false;
+
+        // Check if already notified today
+        if (shownNotifications.includes(eventKey)) return false;
+
+        const eventStartDate = new Date(event.date);
+        const eventEndDate = new Date(event.endDate || event.date);
+        eventStartDate.setHours(0, 0, 0, 0);
+        eventEndDate.setHours(0, 0, 0, 0);
+
+        // Event is due if it starts today or is ongoing
+        const isToday = eventStartDate.getTime() === today.getTime();
+        const isOngoing = eventStartDate < today && eventEndDate >= today;
+
+        return isToday || isOngoing;
+      });
+
+      console.log('[Notifications] Due reminders found:', dueReminders.length, dueReminders.map(e => e.description));
+      // Show notifications for each due reminder
+      for (const event of dueReminders) {
+        const eventKey = getEventKey(event);
+        const eventStartDate = new Date(event.date);
+        eventStartDate.setHours(0, 0, 0, 0);
+        const isOngoing = eventStartDate < today;
+
+        try {
+          new Notification('📅 Reminder Due!', {
+            body: `${isOngoing ? '🔄 Ongoing: ' : '⏰ Today: '}${event.description}`,
+            icon: '/favicon.ico',
+            tag: eventKey,
+            requireInteraction: false,
+          });
+
+          // Mark as shown
+          shownNotifications.push(eventKey);
+        } catch (error) {
+          console.error('Error showing notification:', error);
+        }
+      }
+
+      // Save shown notifications to localStorage
+      if (dueReminders.length > 0) {
+        localStorage.setItem(notificationKey, JSON.stringify(shownNotifications));
+      }
+
+      // Clean up old notification keys (older than 7 days)
+      const keys = Object.keys(localStorage);
+      for (const key of keys) {
+        if (key.startsWith('reminderNotificationsShown_')) {
+          const dateStr = key.replace('reminderNotificationsShown_', '');
+          const keyDate = new Date(dateStr);
+          const diffDays = Math.ceil((today.getTime() - keyDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays > 7) {
+            localStorage.removeItem(key);
+          }
+        }
+      }
+    };
+
+    // Small delay to ensure the app is fully loaded
+    const timeoutId = setTimeout(checkAndShowNotifications, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, [currentUser, calendarData, reminderPreferences, getEventKey]);
 
   // Add user event to Firebase
   const addUserEvent = useCallback(

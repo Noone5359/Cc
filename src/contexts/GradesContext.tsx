@@ -290,39 +290,23 @@ export const GradesProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         );
       }
 
-      // Get latest grades for each course (handles retakes)
-      interface CourseData {
-        grade: { subjectCode: string; credits: number; grade: string };
-        semester: number;
-      }
-      const courseMap: { [subjectCode: string]: CourseData } = {};
+      // CGPA and SGPA values are kept as extracted from the grade sheet (no recalculation)
+
+      // Recalculate totalCredits to exclude duplicate credits from retaken courses
+      // For each unique course, only count its credits once (from the latest attempt)
+      const courseCreditsMap: { [subjectCode: string]: number } = {};
       result.semesters.forEach((sem) => {
         sem.grades.forEach((grade) => {
-          const existing = courseMap[grade.subjectCode];
-          // If course doesn't exist or current semester is later, update it
-          if (!existing || sem.semester > existing.semester) {
-            courseMap[grade.subjectCode] = {
-              grade: grade,
-              semester: sem.semester,
-            };
+          // Always update with the latest occurrence (semesters are ordered latest first)
+          // So we only set if not already present to keep the first (latest) occurrence
+          if (!(grade.subjectCode in courseCreditsMap)) {
+            courseCreditsMap[grade.subjectCode] = grade.credits;
           }
         });
       });
 
-      // Recalculate totalCredits using only latest grades
-      // Credits for F grades should only be counted when the student clears them
-      let totalPassedCredits = 0;
-
-      Object.values(courseMap).forEach((courseData) => {
-        const grade = courseData.grade;
-        // Only add credits if grade is not 'F'
-        if (grade.grade !== 'F') {
-          totalPassedCredits += grade.credits || 0;
-        }
-      });
-
-      result.totalCredits = totalPassedCredits;
-      // Keep the CGPA as extracted from the grade sheet (don't recalculate)
+      // Sum up unique course credits
+      result.totalCredits = Object.values(courseCreditsMap).reduce((sum, credits) => sum + credits, 0);
 
       // Add grade sheet URL and filename to result
       const finalResult: GradesData = {

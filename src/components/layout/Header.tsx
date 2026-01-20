@@ -13,10 +13,11 @@
  */
 
 import { SunIcon, MoonIcon, LogoIcon } from '@components/icons/SidebarIcons';
+
 import { useAppConfig } from '@contexts/AppConfigContext';
 import { useUser } from '@contexts/UserContext';
 import { useRole } from '@features/auth/hooks/useRole';
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 interface HeaderProps {
@@ -33,10 +34,10 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
-  const { user, updateUser } = useUser();
+  const { user } = useUser();
   const { config: appConfig } = useAppConfig();
   const { isAdmin } = useRole();
-  const [isTogglingCourse, setIsTogglingCourse] = useState(false);
+
 
   React.useEffect(() => {
     const root = document.documentElement;
@@ -59,20 +60,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
 
   const toggleTheme = () => setIsDark(!isDark);
 
-  const toggleCourseOption = async () => {
-    if (!user || isTogglingCourse) return;
 
-    setIsTogglingCourse(true);
-    const newCourseOption = user.courseOption === 'CBCS' ? 'NEP' : 'CBCS';
-
-    try {
-      await updateUser({ courseOption: newCourseOption });
-    } catch (error) {
-      console.error('Error updating course option:', error);
-    } finally {
-      setIsTogglingCourse(false);
-    }
-  };
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full bg-gradient-to-r from-white/95 via-slate-50/95 to-white/95 dark:from-slate-900/95 dark:via-slate-900/90 dark:to-slate-900/95 backdrop-blur-xl z-50 border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg overflow-hidden">
@@ -175,38 +163,8 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen, setSidebarOpen }) => {
               </Link>
             )}
 
-            {/* Course Type Toggle */}
-            {user && user.courseOption && (
-              <button
-                onClick={toggleCourseOption}
-                disabled={isTogglingCourse}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gradient-to-br hover:from-slate-100 hover:to-blue-50 dark:hover:from-slate-800 dark:hover:to-slate-800/70 focus:outline-none transition-all duration-300 group disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md hover:scale-105 relative overflow-hidden"
-                title={`Switch to ${user.courseOption === 'CBCS' ? 'NEP' : 'CBCS'}`}
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="flex items-center gap-1.5 relative z-10">
-                  <span className="text-base transition-transform duration-300 group-hover:scale-110">
-                    {user.courseOption === 'CBCS' ? '📖' : '📚'}
-                  </span>
-                  <span className="text-sm font-bold bg-gradient-to-r from-slate-700 to-slate-600 dark:from-slate-200 dark:to-slate-300 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-purple-600 dark:group-hover:from-blue-400 dark:group-hover:to-purple-400 transition-all">
-                    {user.courseOption || 'CBCS'}
-                  </span>
-                </div>
-                <svg
-                  className="w-4 h-4 text-slate-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-all duration-300 group-hover:rotate-180 relative z-10"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                  />
-                </svg>
-              </button>
-            )}
+
+
 
             {/* Theme Toggle */}
             <button

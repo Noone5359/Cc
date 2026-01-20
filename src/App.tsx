@@ -19,6 +19,7 @@ import { ScheduleProvider } from '@contexts/ScheduleContext';
 import { UserProvider } from '@contexts/UserContext';
 import { AuthProvider } from '@features/auth/hooks/useAuth';
 import { RoleProvider } from '@features/auth/hooks/useRole';
+import { SidebarProvider } from '@contexts/SidebarContext';
 
 // Utilities
 import { lazyWithRetry } from '@lib/utils/lazyWithRetry';
@@ -231,7 +232,9 @@ const App: React.FC = () => {
                   <CalendarProvider>
                     <FormsProvider>
                       <CampusMapProvider>
-                        <RouterProvider router={router} />
+                        <SidebarProvider>
+                          <RouterProvider router={router} />
+                        </SidebarProvider>
                       </CampusMapProvider>
                     </FormsProvider>
                   </CalendarProvider>

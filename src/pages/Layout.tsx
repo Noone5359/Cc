@@ -3,14 +3,20 @@ import Header from '@components/layout/Header';
 import Sidebar from '@components/layout/Sidebar';
 import SessionGuard from '@components/common/SessionGuard';
 import { useAppConfig } from '@contexts/AppConfigContext';
-import React, { useState, useEffect } from 'react';
+import { useSidebar } from '@contexts/SidebarContext';
+import React, { useEffect } from 'react';
 import { useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
 const Layout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
-  const [sidebarHovering, setSidebarHovering] = useState(false);
+  const {
+    sidebarOpen,
+    setSidebarOpen,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+    sidebarHovering,
+    setSidebarHovering,
+  } = useSidebar();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
   const { config } = useAppConfig();
